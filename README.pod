@@ -1,0 +1,30 @@
+=pod
+
+=head1 NAME
+
+mopx::contracts - contracts for mop
+
+=head1 SYNOPSIS
+
+    use mop;
+    use mopx::contracts;
+
+    use Types::Standard -types;
+
+    class Foo {
+        has $!bar is rw, expected(Int);
+
+        method add_numbers($a, $b) is expected(Int, Int), ensured(Int) {
+            $a + $b
+        };
+    }
+
+=head1 DESCRIPTION
+
+Type checking for L<mop>.
+
+=head1 AUTHOR
+
+Viacheslav Tykhanovskyi
+
+=cut
