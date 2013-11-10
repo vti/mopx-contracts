@@ -6,13 +6,26 @@ use warnings;
 use base 'Exporter';
 our @EXPORT = qw(expected ensured);
 
+require Carp;
+
 use mop;
 use mopx::contracts::metaclass;
+
+$Carp::Internal{(__PACKAGE__)}++;
+$Carp::Internal{'mop::internals::observable'}++;
+$Carp::Internal{'mop::attribute'}++;
+$Carp::Internal{'mop::class'}++;
 
 sub expected {
     if ($_[0]->isa('mop::attribute')) {
         my ($attr, $type) = @_;
-        $attr->bind('before:STORE_DATA' => sub { $type->assert_valid(${$_[2]}) });
+        $attr->bind(
+            'before:STORE_DATA' => sub {
+                my $error = $type->validate(${$_[2]});
+                Carp::croak($attr->name . ' type failed: ' . $error)
+                  if defined $error;
+            }
+        );
     }
     elsif ($_[0]->isa('mop::method')) {
         my ($meth, @types) = @_;

@@ -18,8 +18,8 @@ class Foo {
         $!bar = $val;
     };
 
-    method add_numbers($a, $b) is expected(Int, Int), ensured(Int) {
-        $a + $b
+    method numbers($a, $b) is expected(Int, Int), ensured(ArrayRef) {
+        [$a + $b]
     };
 }
 
@@ -48,11 +48,11 @@ subtest 'check attribute type during assignment' => sub {
 subtest 'check method signatures' => sub {
     my $foo = Foo->new;
 
-    my $result = $foo->add_numbers(100, 100);
-    is($result, 200);
+    my $result = $foo->numbers(100, 100);
+    is_deeply($result, [200]);
 
     like(
-        exception { $foo->add_numbers([], 20) },
+        exception { $foo->numbers([], 20) },
         qr/did not pass type constraint/
     );
 };

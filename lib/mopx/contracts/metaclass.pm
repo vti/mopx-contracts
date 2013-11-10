@@ -1,6 +1,14 @@
 package mopx::contracts::metaclass;
 
+require Carp;
+
 use mop;
+
+$Carp::Internal{(__PACKAGE__)}++;
+$Carp::Internal{'mop::internals::observable'}++;
+$Carp::Internal{'mop::attribute'}++;
+$Carp::Internal{'mop::class'}++;
+$Carp::Internal{'mop::role'}++;
 
 role mopx::contracts::metaclass::role {
     has $!expected_arg_types is lazy, rw = $_->_build_expected_arg_types;
@@ -8,8 +16,11 @@ role mopx::contracts::metaclass::role {
 
     method execute ($invocant, $args) {
         for my $i (0..$#$args) {
-            $!ensured_arg_types->[$i]->assert_valid($args->[$i])
-                if $!ensured_arg_types->[$i];
+            my $type = $!expected_arg_types->[$i];
+            next unless $type;
+
+            my $error = $type->validate($args->[$i]);
+            Carp::croak('arg['.$i.'] type failed: ' . $error) if defined $error;
         }
         $self->next::method($invocant, $args);
     }
