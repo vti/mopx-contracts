@@ -45,3 +45,67 @@ sub ensured {
 }
 
 1;
+__END__
+
+=pod
+
+=head1 NAME
+
+mopx::contracts - contracts for mop
+
+=head1 SYNOPSIS
+
+    use mop;
+    use mopx::contracts;
+
+    use Types::Standard -types;
+
+    class Foo {
+        has $!bar is rw, expected(Int);
+
+        method add_numbers($a, $b) is expected(Int, Int), ensured(Int) {
+            $a + $b
+        };
+    }
+
+=head1 DESCRIPTION
+
+Type checking for L<mop>. The type checking is done via L<Type::Tiny>.
+
+=head2 Exported functions
+
+=head3 C<expected>
+
+    ensured(Str, Int, ...)
+
+Check the arguments.
+
+=head3 C<ensured>
+
+    ensured(Str, ...)
+
+Check the return value.
+
+=head2 Inheritance
+
+Types are inherited. No need for duplication. Useful for describing abstract
+classes or interfaces.
+
+    class MyAbstractClass is abstract {
+        method do ($a, $b, $c) is expected(Str, Int, Int), ensured(Str)
+    }
+
+    class MyClass extends MyAbstractClass {}
+
+=head1 AUTHOR
+
+Viacheslav Tykhanovskyi
+
+=head1 COPYRIGHT AND LICENSE
+
+Copyright (C) 2013, Viacheslav Tykhanovskyi
+
+This program is free software, you can redistribute it and/or modify it under
+the terms of the Artistic License version 2.0.
+
+=cut
