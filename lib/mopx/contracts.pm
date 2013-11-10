@@ -6,6 +6,8 @@ use warnings;
 use base 'Exporter';
 our @EXPORT = qw(expected ensured);
 
+our $VERSION = '0.01';
+
 require Carp;
 
 use mop;
