@@ -1,4 +1,5 @@
-package mopx::contracts::metaclass;
+use strict;
+use warnings;
 
 require Carp;
 

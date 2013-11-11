@@ -31,7 +31,33 @@ sub expected {
     }
     elsif ($_[0]->isa('mop::method')) {
         my ($meth, @types) = @_;
+
         mop::apply_metaclass($meth, 'mopx::contracts::metaclass');
+
+        $meth->associated_meta->bind(
+            'before:FINALIZE' => sub {
+                my ($meta) = @_;
+
+                my $parent_types = _superclass_expected_types($meth, $meta);
+
+                return unless @$parent_types;
+
+                if (@$parent_types > @types) {
+                    Carp::croak('preconditions cannot be stronger: '
+                          . 'wrong number of arguments');
+                }
+
+                for (my $i = 0; $i < @$parent_types; $i++) {
+                    if (!$types[$i]->is_a_type_of($parent_types->[$i])) {
+                        Carp::croak('preconditions cannot be stronger: '
+                              . $types[$i]->name
+                              . ' is not a subtype of '
+                              . $parent_types->[$i]->name);
+                    }
+                }
+            }
+        );
+
         $meth->expected_arg_types(\@types);
     }
 }
@@ -40,8 +66,62 @@ sub ensured {
     if ($_[0]->isa('mop::method')) {
         my ($meth, @types) = @_;
         mop::apply_metaclass($meth, 'mopx::contracts::metaclass');
+
+        $meth->associated_meta->bind(
+            'before:FINALIZE' => sub {
+                my ($meta) = @_;
+
+                my $parent_types = _superclass_ensured_types($meth, $meta);
+
+                return unless @$parent_types;
+
+                if (@$parent_types != @types) {
+                    Carp::croak('postconditions cannot be weaker: '
+                          . 'wrong number of arguments');
+                }
+
+                for (my $i = 0; $i < @$parent_types; $i++) {
+                    if (!$parent_types->[$i]->is_a_type_of($types[$i])) {
+                        Carp::croak('postconditions cannot be weaker: '
+                              . $parent_types->[$i]->name
+                              . ' is not a subtype of '
+                              . $types[$i]->name);
+                    }
+                }
+            }
+        );
+
+
         $meth->ensured_arg_types(\@types);
     }
+}
+
+sub _superclass_expected_types {
+    my ($meth, $meta) = @_;
+
+    if (my $superclass = $meta->superclass) {
+        if (my $superclass_meta = mop::meta($superclass)) {
+            if (my $method = $superclass_meta->get_method($meth->name)) {
+                return $method->expected_arg_types;
+            }
+        }
+    }
+
+    return [];
+}
+
+sub _superclass_ensured_types {
+    my ($meth, $meta) = @_;
+
+    if (my $superclass = $meta->superclass) {
+        if (my $superclass_meta = mop::meta($superclass)) {
+            if (my $method = $superclass_meta->get_method($meth->name)) {
+                return $method->ensured_arg_types;
+            }
+        }
+    }
+
+    return [];
 }
 
 1;
