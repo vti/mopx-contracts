@@ -16,11 +16,15 @@ class Foo {
 
     method set_bar($val) {
         $!bar = $val;
-    };
+    }
 
     method numbers($a, $b) is expected(Int, Int), ensured(ArrayRef) {
         [$a + $b]
-    };
+    }
+
+    method returnMe(@args) is ensured(Int) {
+        @args
+    }
 }
 
 subtest 'check attribute type during construction' => sub {
@@ -53,6 +57,33 @@ subtest 'check method signatures' => sub {
 
     like(
         exception { $foo->numbers([], 20) },
+        qr/did not pass type constraint/
+    );
+};
+
+subtest 'check number of arguments' => sub {
+    my $foo = Foo->new;
+
+    like(
+        exception { $foo->numbers() },
+        qr/wrong number of arguments/
+    );
+};
+
+subtest 'check number of return values' => sub {
+    my $foo = Foo->new;
+
+    like(
+        exception { $foo->returnMe() },
+        qr/wrong number of return values: got 0, expected 1/
+    );
+};
+
+subtest 'check return values' => sub {
+    my $foo = Foo->new;
+
+    like(
+        exception { $foo->returnMe([]) },
         qr/did not pass type constraint/
     );
 };

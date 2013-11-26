@@ -39,7 +39,6 @@ sub expected {
                 my ($meta) = @_;
 
                 my $parent_types = _superclass_expected_types($meth, $meta);
-
                 return unless @$parent_types;
 
                 if (@$parent_types > @types) {
@@ -72,7 +71,6 @@ sub ensured {
                 my ($meta) = @_;
 
                 my $parent_types = _superclass_ensured_types($meth, $meta);
-
                 return unless @$parent_types;
 
                 if (@$parent_types != @types) {
@@ -90,7 +88,6 @@ sub ensured {
                 }
             }
         );
-
 
         $meth->ensured_arg_types(\@types);
     }

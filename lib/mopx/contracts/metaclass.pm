@@ -16,26 +16,54 @@ role mopx::contracts::metaclass::role {
     has $!ensured_arg_types is lazy,  rw = $_->_build_ensured_arg_types;
 
     method execute ($invocant, $args) {
-        for my $i (0..$#$args) {
-            my $type = $!expected_arg_types->[$i];
-            next unless $type;
+        if (defined $!expected_arg_types) {
+            if (@$args != @{$!expected_arg_types}) {
+                Carp::croak('wrong number of arguments');
+            }
 
-            my $error = $type->validate($args->[$i]);
-            Carp::croak('arg['.$i.'] type failed: ' . $error) if defined $error;
+            for my $i (0..$#$args) {
+                my $type = $!expected_arg_types->[$i];
+                next unless $type;
+
+                my $error = $type->validate($args->[$i]);
+                Carp::croak('arg[' . $i . '] type failed: ' . $error)
+                  if defined $error;
+            }
         }
-        $self->next::method($invocant, $args);
+
+        my @retval = $self->next::method($invocant, $args);
+
+        if (defined $!ensured_arg_types) {
+            my $got      = scalar @retval;
+            my $expected = scalar @{$! ensured_arg_types};
+            if ($got != $expected) {
+                Carp::croak('wrong number of return values: '
+                      . "got $got, expected $expected");
+            }
+
+            for my $i (0..$#retval) {
+                my $type = $!ensured_arg_types->[$i];
+                next unless $type;
+
+                my $error = $type->validate($retval[$i]);
+                Carp::croak('return[' . $i . '] type failed: ' . $error)
+                  if defined $error;
+            }
+        }
+
+        return wantarray ? @retval : $retval[0];
     }
 
     method _build_expected_arg_types {
         my $class = $self->associated_meta;
 
-        my ($next, $method);
+        my ($next, $method) = ($class);
         do {
-            return [] unless $class->superclass;
-            $next = mop::meta($class->superclass);
+            return unless $next->superclass;
+            $next = mop::meta($next->superclass);
         } while ($next && !($method = $next->get_method($self->name)));
 
-        return [] unless $method->does(__ROLE__);
+        return unless $method->does(__ROLE__);
 
         return $method->expected_arg_types;
     }
@@ -43,13 +71,13 @@ role mopx::contracts::metaclass::role {
     method _build_ensured_arg_types {
         my $class = $self->associated_meta;
 
-        my ($next, $method);
+        my ($next, $method) = ($class);
         do {
-            return [] unless $class->superclass;
-            $next = mop::meta($class->superclass);
+            return unless $next->superclass;
+            $next = mop::meta($next->superclass);
         } while ($next && !($method = $next->get_method($self->name)));
 
-        return [] unless $method->does(__ROLE__);
+        return unless $method->does(__ROLE__);
 
         return $method->ensured_arg_types;
     }
