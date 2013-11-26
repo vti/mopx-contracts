@@ -17,8 +17,11 @@ role mopx::contracts::metaclass::role {
 
     method execute ($invocant, $args) {
         if (defined $!expected_arg_types) {
-            if (@$args != @{$!expected_arg_types}) {
-                Carp::croak('wrong number of arguments');
+            my $got      = scalar @$args;
+            my $expected = scalar @{$!expected_arg_types};
+            if ($got != $expected) {
+                Carp::croak('wrong number of arguments: '
+                      . "got $got, expected $expected");
             }
 
             for my $i (0..$#$args) {
@@ -35,7 +38,7 @@ role mopx::contracts::metaclass::role {
 
         if (defined $!ensured_arg_types) {
             my $got      = scalar @retval;
-            my $expected = scalar @{$! ensured_arg_types};
+            my $expected = scalar @{$!ensured_arg_types};
             if ($got != $expected) {
                 Carp::croak('wrong number of return values: '
                       . "got $got, expected $expected");
